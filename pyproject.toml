@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=69.0.0", "wheel"] # Updated setuptools to a more recent version
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,15 +9,19 @@ description = "A Python library to parse and process TMDL (Table Metadata Descri
 authors = [
   { name="Gustavo von Atzingen", email="gustavo.von.atzingen@gmail.com" }
 ]
-license = { file = "LICENSE.txt" }
+license = "MIT" # Use SPDX identifier
+license-files = ["LICENSE.txt"] # Explicitly declare license file
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/Atzingen/tmdl-parser"
+
+[tool.setuptools.packages.find]
+include = ["tmdlparser*"]  # Include only the tmdlparser package and its submodules
+exclude = ["examples*", "pbip*", "images*", "output*"] # Exclude other top-level directories
