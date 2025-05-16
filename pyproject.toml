@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmdl-parser"
+version = "0.1.0"
+description = "A Python library to parse and process TMDL (Table Metadata Description Language) files."
+authors = [
+  { name="Gustavo von Atzingen", email="gustavo.von.atzingen@gmail.com" }
+]
+license = { file = "LICENSE.txt" }
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Atzingen/tmdl-parser"
