@@ -1,6 +1,6 @@
 import json
 import os, sys
-from data_model import *
+from .data_model import *
 
 class TMLDParser:
     def __init__(self,
@@ -43,13 +43,14 @@ class TMLDParser:
                 continue
             elif line.startswith('///'):  #reach a new description
                 if level == 2:
-                    calc, prop = self._parse_calculation(current_properties)
+                    calc_list, prop = self._parse_calculation(current_properties)
+                    calc_str = '\n'.join(calc_list)
                 else:
-                    calc, prop = [], current_properties
-                tmdl = TMDL.create(description=current_description, 
+                    calc_str, prop = '', current_properties # Ensure calc_str is a string
+                tmdl = TMDL.create(description='\n'.join(current_description),
                                    element=current_element, 
                                    properties=prop,
-                                   calculation=calc)
+                                   calculation=calc_str) # Pass the joined string
                 groups.append(tmdl)
                 current_description = [line.strip().strip('/// ')]
                 current_properties = []
@@ -60,25 +61,27 @@ class TMLDParser:
             else:
                 if current_element:  # reach a new element (store content)
                     if level == 2:
-                        calc, prop = self._parse_calculation(current_properties)
+                        calc_list, prop = self._parse_calculation(current_properties)
+                        calc_str = '\n'.join(calc_list)
                     else:
-                        calc, prop = [], current_properties
-                    tmdl = TMDL.create(description=current_description, 
+                        calc_str, prop = '', current_properties # Ensure calc_str is a string
+                    tmdl = TMDL.create(description='\n'.join(current_description),
                                        element=current_element, 
                                        properties=prop,
-                                       calculation=calc)
+                                       calculation=calc_str) # Pass the joined string
                     groups.append(tmdl)
                     current_description = []
                     current_properties = []
                 current_element = line.strip()
         if level == 2:
-            calc, prop = self._parse_calculation(current_properties)
+            calc_list, prop = self._parse_calculation(current_properties)
+            calc_str = '\n'.join(calc_list)
         else:
-            calc, prop = [], current_properties
-        tmdl = TMDL.create(description=current_description, 
+            calc_str, prop = '', current_properties # Ensure calc_str is a string
+        tmdl = TMDL.create(description='\n'.join(current_description),
                            element=current_element, 
                            properties=prop,
-                           calculation=calc)
+                           calculation=calc_str) # Pass the joined string
         groups.append(tmdl)
         return groups
     
