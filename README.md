@@ -118,6 +118,34 @@ Calculation: ['Calculation Formula']
 --------------------
 ```
 
+### Export formats
+
+The parser can also return the parsed structure as a plain Python dictionary
+or as a pandas `DataFrame` for downstream analysis:
+
+```python
+from tmdlparser import TMLDParser
+
+parser = TMLDParser("path/to/project.pbip")
+parser.parse_all_tables()
+
+# Nested dict, ready for json.dumps() or any downstream processing.
+data = parser.to_dict()
+
+# Flat DataFrame (one row per TMDL entry, nested entries get parent_element set).
+df = parser.to_dataframe()
+
+# Or keep only the top-level entries with raw properties:
+df_top = parser.to_dataframe(flatten=False)
+```
+
+`to_dataframe()` requires pandas, which is an optional dependency. Install it
+with:
+
+```bash
+pip install tmdl-parser[pandas]
+```
+
 
 
 <!-- ROADMAP -->
