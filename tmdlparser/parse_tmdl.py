@@ -119,33 +119,91 @@ class TMLDParser:
             self.tables[table_name] = result
         return self.tables
     
-    def _tmdl_to_dict(self, tmdl):
+    def to_dict(self) -> dict:
         """
-        Recursively converts a TMDL object (and its nested TMDL objects in 'properties') 
-        into a dictionary suitable for JSON serialization.
+        Return the parsed TMDL structure as a nested Python dictionary of the
+        form ``{table_name: [tmdl_dict, ...]}``. If tables have not been
+        parsed yet, :meth:`parse_all_tables` is called first.
         """
+        if not self.tables:
+            self.parse_all_tables()
         return {
-            "description": tmdl.description,
-            "element": tmdl.element,
-            "calculation": tmdl.calculation,
-            "properties": [
-                self._tmdl_to_dict(prop) if isinstance(prop, TMDL) else prop
-                for prop in tmdl.properties
-            ],
+            table_name: [t.to_dict() for t in tmdls]
+            for table_name, tmdls in self.tables.items()
         }
+
+    def to_dataframe(self, flatten: bool = True):
+        """
+        Return the parsed TMDL structure as a pandas ``DataFrame``.
+
+        Pandas is an optional dependency; install it via
+        ``pip install tmdl-parser[pandas]``.
+
+        Parameters
+        ----------
+        flatten:
+            When ``True`` (default) every nested TMDL (typically columns and
+            measures inside a table) becomes its own row, with
+            ``parent_element`` pointing back to the enclosing table. When
+            ``False`` only top-level TMDL entries are emitted and their
+            ``properties`` column keeps the raw Python objects.
+        """
+        try:
+            import pandas as pd
+        except ImportError as exc:
+            raise ImportError(
+                "pandas is required for to_dataframe(). "
+                "Install with: pip install tmdl-parser[pandas]"
+            ) from exc
+
+        if not self.tables:
+            self.parse_all_tables()
+
+        rows = []
+        for table_name, tmdls in self.tables.items():
+            for tmdl in tmdls:
+                if flatten:
+                    rows.extend(self._flatten_tmdl(tmdl, table_name))
+                else:
+                    rows.append({
+                        "table": table_name,
+                        "parent_element": "",
+                        "element": tmdl.element,
+                        "description": tmdl.description,
+                        "calculation": tmdl.calculation,
+                        "properties": tmdl.properties,
+                    })
+        columns = ["table", "parent_element", "element",
+                   "description", "calculation", "properties"]
+        return pd.DataFrame(rows, columns=columns)
+
+    def _flatten_tmdl(self, tmdl, table_name, parent_element=""):
+        """
+        Yield dict rows for ``tmdl`` and any nested TMDL objects inside its
+        ``properties`` list. Non-TMDL (raw string) properties stay attached
+        to the parent row as a list.
+        """
+        scalar_props = [p for p in tmdl.properties if not isinstance(p, TMDL)]
+        nested = [p for p in tmdl.properties if isinstance(p, TMDL)]
+
+        rows = [{
+            "table": table_name,
+            "parent_element": parent_element,
+            "element": tmdl.element,
+            "description": tmdl.description,
+            "calculation": tmdl.calculation,
+            "properties": scalar_props,
+        }]
+        for child in nested:
+            rows.extend(self._flatten_tmdl(child, table_name, tmdl.element))
+        return rows
 
     def save_to_json(self, output_path):
         """
         Saves the parsed TMDL structure into a JSON file at the given output path.
         If tables were not previously parsed, it will parse them before saving.
         """
-        if not self.tables:
-            self.parse_all_tables()
-
-        data = {}
-        for table_name, tmdls in self.tables.items():
-            data[table_name] = [self._tmdl_to_dict(t) for t in tmdls]
-
+        data = self.to_dict()
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         print(f"Data successfully saved to {output_path}")
