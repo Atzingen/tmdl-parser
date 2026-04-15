@@ -18,6 +18,22 @@ class TMDL:
         """
         return cls(description, element, properties, calculation)
 
+    def to_dict(self) -> dict:
+        """
+        Recursively convert this TMDL object into a plain dictionary.
+        Nested TMDL objects inside ``properties`` are converted as well;
+        non-TMDL entries (raw strings) are kept as-is.
+        """
+        return {
+            "description": self.description,
+            "element": self.element,
+            "calculation": self.calculation,
+            "properties": [
+                prop.to_dict() if isinstance(prop, TMDL) else prop
+                for prop in self.properties
+            ],
+        }
+
     def __str__(self):
         """
         Return a string representation of the TMDL object.
