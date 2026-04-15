@@ -5,13 +5,44 @@ import pytest
 from tmdlparser import TMLDParser
 from tmdlparser.data_model import TMDL
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PBIP = os.path.join(REPO_ROOT, "pbip", "PNP_Publicada_dev.pbip")
+
+SAMPLE_TMDL = """\
+/// Sample table description
+table SampleTable
+\tlineageTag: 00000000-0000-0000-0000-000000000001
+\t/// First column description
+\tcolumn Amount
+\t\tlineageTag: 00000000-0000-0000-0000-000000000002
+\t\tsummarizeBy: sum
+\t\tsourceColumn: amount
+\t/// Second column description
+\tcolumn Label
+\t\tlineageTag: 00000000-0000-0000-0000-000000000003
+\t\tsummarizeBy: none
+\t\tsourceColumn: label
+"""
 
 
 @pytest.fixture(scope="module")
-def parser():
-    p = TMLDParser(PBIP)
+def synthetic_pbip(tmp_path_factory):
+    """Build a minimal synthetic .pbip project tree in a tmp dir.
+
+    The parser does not open the .pbip file itself; it only uses its name
+    to derive the adjacent ``<name>.SemanticModel/definition/tables``
+    directory. So we just need that directory populated with at least one
+    .tmdl file.
+    """
+    root = tmp_path_factory.mktemp("pbip_project")
+    (root / "sample.pbip").write_text("", encoding="utf-8")
+    tables_dir = root / "sample.SemanticModel" / "definition" / "tables"
+    tables_dir.mkdir(parents=True)
+    (tables_dir / "SampleTable.tmdl").write_text(SAMPLE_TMDL, encoding="utf-8")
+    return str(root / "sample.pbip")
+
+
+@pytest.fixture(scope="module")
+def parser(synthetic_pbip):
+    p = TMLDParser(synthetic_pbip)
     p.parse_all_tables()
     return p
 
@@ -34,11 +65,10 @@ def test_parser_to_dict_shape(parser):
     data = parser.to_dict()
 
     assert isinstance(data, dict)
-    assert len(data) > 0
-    first_table = next(iter(data))
-    first_entries = data[first_table]
-    assert isinstance(first_entries, list)
-    assert {"description", "element", "calculation", "properties"} <= set(first_entries[0].keys())
+    assert "SampleTable.tmdl" in data
+    entries = data["SampleTable.tmdl"]
+    assert isinstance(entries, list)
+    assert {"description", "element", "calculation", "properties"} <= set(entries[0].keys())
 
 
 def test_parser_to_dict_is_json_serializable(parser, tmp_path):
@@ -60,7 +90,6 @@ def test_to_dataframe_flattened(parser):
     ]
     assert len(df) > 0
     assert df["table"].nunique() == len(parser.tables)
-    # flattened mode emits at least one row per top-level TMDL plus nested ones
     top_level_rows = df[df["parent_element"] == ""]
     assert len(top_level_rows) >= len(parser.tables)
 
@@ -70,7 +99,6 @@ def test_to_dataframe_non_flattened(parser):
     df = parser.to_dataframe(flatten=False)
 
     assert (df["parent_element"] == "").all()
-    # in non-flat mode properties can still hold raw TMDL objects
     assert len(df) >= len(parser.tables)
 
 
