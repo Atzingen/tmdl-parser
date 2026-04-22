@@ -2,7 +2,7 @@ import json
 import os, sys
 from .data_model import *
 
-class TMLDParser:
+class TMDLParser:
     def __init__(self,
                  pbip_project_path=""):
         self.max_depth = 3

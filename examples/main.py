@@ -1,7 +1,7 @@
 # Example usage of tmdlparser
 import os
 import json
-from tmdlparser import TMLDParser
+from tmdlparser import TMDLParser
 
 # Load config
 config_path = '../config.json'
@@ -27,7 +27,7 @@ if os.path.dirname(file_path) == "":
 if not file_path:
     raise ValueError("No file path provided. Please set 'default_file_path' in config.json or provide a path when prompted.")
 
-tmdl = TMLDParser(file_path)
+tmdl = TMDLParser(file_path)
 tables = tmdl.parse_all_tables()
 
 for table_name, table_data in tables.items():

@@ -2,7 +2,7 @@
 import os
 import pytest
 
-from tmdlparser import TMLDParser
+from tmdlparser import TMDLParser
 from tmdlparser.data_model import TMDL
 
 
@@ -42,7 +42,7 @@ def synthetic_pbip(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def parser(synthetic_pbip):
-    p = TMLDParser(synthetic_pbip)
+    p = TMDLParser(synthetic_pbip)
     p.parse_all_tables()
     return p
 

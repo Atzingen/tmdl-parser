@@ -1,7 +1,7 @@
 import os
 import json
 from data_model import *
-from parse_tmdl import TMLDParser
+from parse_tmdl import TMDLParser
 
 # Load config
 config_path = 'config.json'
@@ -31,7 +31,7 @@ if os.path.dirname(file_path) == "":
 if not file_path:
     file_path = 'pbip/PNP_Publicada_dev.pbip'
 
-tmdl = TMLDParser(file_path)
+tmdl = TMDLParser(file_path)
 tables = tmdl.parse_all_tables()
 
 for table_name, table_data in tables.items():
